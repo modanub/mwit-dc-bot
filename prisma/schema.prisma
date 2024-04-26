@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model VoiceChannel {
+  guild     Guild   @relation(fields: [guildId], references: [id])
+  guildId   String
+  id        String  @id @unique
+  name      String  @default("NaN")
+  blacklist String  @default("[]")
+  whitelist String  @default("[]")
+  public    Boolean @default(false)
+  maxUsers  Int
+}
+
+model Guild {
+  id                  String         @id @unique
+  joinToCreateChannel String         @default("NaN")
+  categoryId          String         @default("NaN")
+  voiceChannels       VoiceChannel[]
+}
