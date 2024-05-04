@@ -39,4 +39,8 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
+client.on("error", console.error);
+
 client.login(config.DISCORD_TOKEN);
+
+export { client };

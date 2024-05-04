@@ -1,10 +1,25 @@
 import { Guild, VoiceChannel } from "@prisma/client";
 import prisma from "../db";
-import { ChannelType, GuildMember, OverwriteResolvable, User } from "discord.js";
+import { Channel, ChannelType, GuildMember, GuildVoiceChannelResolvable, OverwriteResolvable } from "discord.js";
+import { client } from "..";
 
-async function getVCConfig(userId: string): Promise<VoiceChannel | null> {
+export async function getVCConfig(userId: string, createIfNull: boolean = false): Promise<VoiceChannel | null> {
     try {
-        return await prisma.voiceChannel.findFirst({
+        return createIfNull ? await prisma.voiceChannel.upsert({
+            where: {
+                id: userId
+            },
+            update: {},
+            create: {
+                id: userId,
+                maxUsers: 0,
+                guild: {
+                    connect: {
+                        id: client.guilds.cache.first()?.id
+                    }
+                }
+            }
+        }) : await prisma.voiceChannel.findFirst({
             where: {
                 id: userId
             }
@@ -23,6 +38,11 @@ export async function getGuildConfig(guildId: string): Promise<Guild | null> {
     })
 }
 
+export function getExistingVC(user: GuildMember, name: string): GuildVoiceChannelResolvable | undefined {
+    name = name == "NaN" ? user.displayName : name;
+    return user.guild.channels.cache.find(channel => channel.type === ChannelType.GuildVoice && channel.name === name) as GuildVoiceChannelResolvable;
+}
+
 export async function createVC(guildId: string, guildConfig: Guild, user: GuildMember) {
     if (!guildConfig) {
         console.error("Guild config not found for guild ID " + guildId);
@@ -32,18 +52,28 @@ export async function createVC(guildId: string, guildConfig: Guild, user: GuildM
     if (!userConfig) {
         console.warn("Using default values for user ID " + user.id);
     }
-    const channelName = userConfig?.name || "⭐ " + user.displayName;
+    const channelName = "⭐ " + (userConfig && userConfig.name != "NaN" ? userConfig.name : user.displayName);
+    const existingVC = getExistingVC(user, channelName);
+    if (existingVC) {
+        console.warn("Channel already exists for user ID " + user.id);
+        await user.voice.setChannel(existingVC);
+        return;
+    }
     let whitelist: OverwriteResolvable[] = [];
-    for (const userId of userConfig?.whitelist?.split(",") || [] as string[]) {
+    for (const userId of userConfig?.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
         if (userId === user.id) continue;
+        if (userId === "") continue;
+        console.debug("Whitelisting user ID " + userId + " for user ID " + user.id);
         whitelist.push({
             id: userId,
             allow: ["ViewChannel", "Connect", "Speak", "Stream"]
         });
     }
     let blacklist: OverwriteResolvable[] = [];
-    for (const userId of userConfig?.blacklist?.split(",") || [] as string[]) {
+    for (const userId of userConfig?.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
         if (userId === user.id) continue;
+        if (userId === "") continue;
+        console.debug("Blacklisting user ID " + userId + " for user ID " + user.id);
         blacklist.push({
             id: userId,
             deny: ["Connect"],
@@ -55,10 +85,18 @@ export async function createVC(guildId: string, guildConfig: Guild, user: GuildM
             type: ChannelType.GuildVoice,
             name: channelName,
             parent: guildConfig.categoryId,
+            userLimit: userConfig?.maxUsers || 0,
             permissionOverwrites: [
                 {
                     id: user.id,
-                    allow: ["MuteMembers", "DeafenMembers", "PrioritySpeaker", "ViewChannel"]
+                    allow: ["MuteMembers", "DeafenMembers", "PrioritySpeaker", "ViewChannel", "Connect", "Speak", "Stream"]
+                },
+                userConfig?.public ? {
+                    id: user.guild.roles.everyone.id,
+                    allow: ["ViewChannel", "Connect", "Speak", "Stream"]
+                } : {
+                    id: user.guild.roles.everyone.id,
+                    deny: ["Connect"]
                 },
                 ...whitelist,
                 ...blacklist
