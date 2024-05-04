@@ -23,4 +23,20 @@ model Guild {
   joinToCreateChannel String         @default("NaN")
   categoryId          String         @default("NaN")
   voiceChannels       VoiceChannel[]
+  colorRoles          ColorRole[]
+  gameRoles           GameRole[]
+}
+
+model ColorRole {
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id])
+  color   String @id @unique
+  roleId  String
+}
+
+model GameRole {
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id])
+  roleId  String
+  game  String @id @unique
 }

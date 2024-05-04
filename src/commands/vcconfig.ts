@@ -73,12 +73,6 @@ export const data = new SlashCommandBuilder()
               .setDescription("Name of private voice channel.")
               .setRequired(true)
           )
-          .addUserOption(option =>
-            option
-              .setName("target")
-              .setDescription("User to configure. Administrators can configure other users.")
-              .setRequired(false)
-          )
       )
         .addSubcommand(subcommand =>
           subcommand
@@ -151,10 +145,10 @@ export async function execute(interaction: CommandInteraction) {
           return;
         }
         whitelist.push(user.id);
-        // check if exist in blacklist
         const index = blacklist.indexOf(user.id)
-        if (index) {
-
+        if (index > -1) {
+          blacklist.splice(index, 1);
+          await updateList('whitelist', guildUser, blacklist);
         }
         await updateList('whitelist', guildUser, whitelist);
         await interaction.reply("Added user to whitelist." + (existingVC ? " Recreate voice channel to apply changes." : ""));
@@ -281,6 +275,11 @@ export async function execute(interaction: CommandInteraction) {
               public: !lock
             }
           });
+          if (existingVC) {
+            await (existingVC as VoiceChannel).permissionOverwrites.edit(interaction.guild.roles.everyone, {
+              Connect: !lock
+            });
+          }
           await interaction.reply("Locked private voice channel.");
         } catch (error) {
           console.error(error);

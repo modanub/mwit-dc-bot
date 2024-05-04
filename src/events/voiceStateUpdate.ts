@@ -18,6 +18,11 @@ export async function execute(oldState: VoiceState, newState: VoiceState) {
     if (!guildConfig) return;
     if (guildConfig.joinToCreateChannel === newState.channelId) {
         console.log(`User ${member.user.tag} joined join-to-create channel`);
-        createVC(newState.guild.id, guildConfig, member);
+        try {
+            createVC(newState.guild.id, guildConfig, member);
+        } catch (error) {
+            console.error(error);
+            member.voice.disconnect();
+        }
     }
 }

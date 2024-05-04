@@ -59,26 +59,31 @@ export async function createVC(guildId: string, guildConfig: Guild, user: GuildM
         await user.voice.setChannel(existingVC);
         return;
     }
-    let whitelist: OverwriteResolvable[] = [];
-    for (const userId of userConfig?.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
-        if (userId === user.id) continue;
-        if (userId === "") continue;
-        console.debug("Whitelisting user ID " + userId + " for user ID " + user.id);
-        whitelist.push({
-            id: userId,
-            allow: ["ViewChannel", "Connect", "Speak", "Stream"]
-        });
-    }
     let blacklist: OverwriteResolvable[] = [];
-    for (const userId of userConfig?.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
-        if (userId === user.id) continue;
-        if (userId === "") continue;
-        console.debug("Blacklisting user ID " + userId + " for user ID " + user.id);
-        blacklist.push({
-            id: userId,
-            deny: ["Connect"],
-            allow: ["ViewChannel"]
-        });
+    let whitelist: OverwriteResolvable[] = [];
+    try {
+        for (const userId of userConfig?.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
+            if (userId === user.id) continue;
+            if (userId === "") continue;
+            console.debug("Whitelisting user ID " + userId + " for user ID " + user.id);
+            whitelist.push({
+                id: userId,
+                allow: ["ViewChannel", "Connect", "Speak", "Stream"]
+            });
+        }
+        for (const userId of userConfig?.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
+            if (userId === user.id) continue;
+            if (userId === "") continue;
+            console.debug("Blacklisting user ID " + userId + " for user ID " + user.id);
+            blacklist.push({
+                id: userId,
+                deny: ["Connect"],
+                allow: ["ViewChannel"]
+            });
+        }
+    } catch (error) {
+        console.log("An error occurred while processing whitelist/blacklist");
+        console.error(error);
     }
     try {
         const channel = await user.guild.channels.create({
@@ -92,14 +97,13 @@ export async function createVC(guildId: string, guildConfig: Guild, user: GuildM
                     allow: ["MuteMembers", "DeafenMembers", "PrioritySpeaker", "ViewChannel", "Connect", "Speak", "Stream"]
                 },
                 userConfig?.public ? {
-                    id: user.guild.roles.everyone.id,
+                    id: user.guild.id,
                     allow: ["ViewChannel", "Connect", "Speak", "Stream"]
                 } : {
-                    id: user.guild.roles.everyone.id,
+                    id: user.guild.id,
                     deny: ["Connect"]
                 },
-                ...whitelist,
-                ...blacklist
+
             ],
         });
         await user.voice.setChannel(channel);
