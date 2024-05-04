@@ -2,26 +2,24 @@ import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, 
 import { getColorRoles } from "../funcs/colorRole";
 
 export const data = new SlashCommandBuilder()
-  .setName("colors")
-  .setDescription("Show all the colors.");
-
+    .setName("colors")
+    .setDescription("🎨 แสดงรายชื่อสีชื่อและเมนูเลือกสี")
 export async function execute(interaction: CommandInteraction) {
-    if (!interaction.guild || interaction.channel?.isDMBased()) { return interaction.reply("❌ This command must be run in a server."); }
-    // check if current channel contain the word "commands" or "bot" or "spam"
+    if (!interaction.guild || interaction.channel?.isDMBased()) { return interaction.reply("❌ คำสั่งนี้ต้องใช้ในเซิร์ฟเวอร์เท่านั้น."); }
     const channel = interaction.channel as BaseGuildTextChannel;
     if (!channel.name?.toLowerCase().includes("commands") && !channel.name?.toLowerCase().includes("bot") && !channel.name?.toLowerCase().includes("spam")) {
-        return interaction.reply({ content: "❌ This command can't be run in this channel!", ephemeral: true });
+        return interaction.reply({ content: "❌ ไม่สามารถใช้คำสั่งในช่องนี้!", ephemeral: true });
     }
     const colorRoles = await getColorRoles(interaction.guild);
-    if (!colorRoles.length) { return interaction.reply("No color roles found."); }
+    if (!colorRoles.length) { return interaction.reply("❓ ไม่มีสีใดๆ ในระบบ."); } 
     const embed = new EmbedBuilder()
-        .setTitle("🎨 List of existing color roles")
+        .setTitle("🎨 รายชื่อสีชื่อ")
         .setColor("#3D7AED");
     const desc = colorRoles.map(role => `- <@&${role.roleId}> - ${role.color}`).join("\n");
     embed.setDescription(desc);
     const menuSelector = new StringSelectMenuBuilder()
         .setCustomId("color_role_selector")
-        .setPlaceholder("🎨 Select a color")
+        .setPlaceholder("🎨 เลือกสีชื่อที่ต้องการ")
         .addOptions(colorRoles.map(role => {
             return new StringSelectMenuOptionBuilder()
                 .setLabel(role.color)

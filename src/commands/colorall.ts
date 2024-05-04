@@ -3,11 +3,11 @@ import { getColorRoles } from "../funcs/colorRole";
 
 export const data = new SlashCommandBuilder()
     .setName("colorall")
-    .setDescription("Set everyone's color to a specific color. [50 people at a time]") // prevent rate limit
+    .setDescription("ตั้งค่าสีให้กับทุกคนในเซิร์ฟเวอร์")
     .addStringOption(option =>
         option
         .setName("color")
-        .setDescription("Color to set.")
+        .setDescription("สีที่ต้องการให้กับทุกคนในเซิร์ฟเวอร์")
         .setRequired(true)
         .setAutocomplete(true)
     )
@@ -26,20 +26,20 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
 }
 export async function execute(interaction: CommandInteraction) {
     const color = interaction.options.get("color");
-    if (!color) { return interaction.reply("Invalid parameters."); }
+    if (!color) { return interaction.reply("❌ คำสั่งไม่ถูกต้อง"); }
     const guild = interaction.guild;
-    if (!guild) { return interaction.reply("❌ This command must be run in a server."); }
+    if (!guild) { return interaction.reply("❌ คำสั่งนี้ต้องใช้ในเซิร์ฟเวอร์เท่านั้น"); }
     await interaction.deferReply();
     let members
     try {
         members = await guild.members.fetch();
     } catch (error) {
         console.error(error);
-        return await interaction.followUp("⚠️ An error occurred while fetching the members.");
+        return await interaction.followUp("⚠️ เกิดข้อผิดพลาดในขณะที่กำลังให้สีให้สมาชิก");
     }
     const colorRoles = await getColorRoles(guild);
     const colorRole = colorRoles.find(role => role.color === color.value);
-    if (!colorRole) { return interaction.reply("Color role not found."); }
+    if (!colorRole) { return interaction.reply("❌ ไม่พบสีที่ระบุในระบบ"); }
     let count = 0;
     console.log(`Assigning color role ${colorRole.color} to ${members.size} members.`)
     for (const member of members.values()) {
@@ -54,9 +54,9 @@ export async function execute(interaction: CommandInteraction) {
             console.log(`Color role ${colorRole.color} assigned to ${member.user.tag}`);
         } catch (error) {
             console.error(error);
-            return await interaction.followUp("⚠️ An error occurred while assigning the color role.");
+            return await interaction.followUp("⚠️ เกิดข้อผิดพลาดในขณะที่กำลังให้สีให้สมาชิก");
         }
         count++;
     }
-    await interaction.followUp(`Assigned color role ${colorRole.color} to ${count} members.`);
+    await interaction.followUp(`✅ สี ${colorRole.color} ถูกให้กับ ${count} สมาชิก`);
 }

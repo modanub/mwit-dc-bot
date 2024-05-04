@@ -4,30 +4,30 @@ import { getExistingVC, getVCConfig } from "../funcs/joinToCreateVC";
 
 export const data = new SlashCommandBuilder()
   .setName("vcconfig")
-  .setDescription("Configure private voice channel configuration.")
+  .setDescription("⚙️ ตั้งค่าห้องเสียงส่วนตัว")
   .addSubcommandGroup(group =>
     group
       .setName("whitelist")
-      .setDescription("Configure whitelist for private voice channel.")
+      .setDescription("⚙️ ตั้งค่าผู้ใช้ที่อนุญาตให้เข้าถึงห้องเสียงส่วนตัว")
       .addSubcommand(subcommand =>
         subcommand
           .setName("add")
-          .setDescription("Add user to whitelist.")
+          .setDescription("✅ เพิ่มผู้ใช้เข้าสู่รายชื่อที่อนุญาต")
           .addUserOption(option =>
             option
               .setName("user")
-              .setDescription("User to whitelist.")
+              .setDescription("🧑 ผู้ใช้ที่ต้องการเพิ่มในรายชื่อที่อนุญาต")
               .setRequired(true)
           )
       )
       .addSubcommand(subcommand =>
         subcommand
           .setName("remove")
-          .setDescription("Remove user from whitelist.")
+          .setDescription("❌ ลบผู้ใช้ออกจากรายชื่อที่อนุญาต")
           .addUserOption(option =>
             option
               .setName("user")
-              .setDescription("User to whitelist.")
+              .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากรายชื่อที่อนุญาต")
               .setRequired(true)
           )
       )
@@ -35,26 +35,26 @@ export const data = new SlashCommandBuilder()
   .addSubcommandGroup(group =>
     group
       .setName("blacklist")
-      .setDescription("Configure blacklist for private voice channel.")
+      .setDescription("⚙️ ตั้งค่าผู้ใช้ที่ไม่อนุญาตให้เข้าถึงห้องเสียงส่วนตัว")
       .addSubcommand(subcommand =>
         subcommand
           .setName("add")
-          .setDescription("Add user to blacklist.")
+          .setDescription("✅ เพิ่มผู้ใช้เข้าสู่รายชื่อที่ไม่อนุญาต")
           .addUserOption(option =>
             option
               .setName("user")
-              .setDescription("User to blacklist.")
+              .setDescription("🧑 ผู้ใช้ที่ต้องการเพิ่มในรายชื่อที่ไม่อนุญาต")
               .setRequired(true)
           )
       )
       .addSubcommand(subcommand =>
         subcommand
           .setName("remove")
-          .setDescription("Remove user from blacklist.")
+          .setDescription("❌ ลบผู้ใช้ออกจากรายชื่อที่ไม่อนุญาต")
           .addUserOption(option =>
             option
               .setName("user")
-              .setDescription("User to blacklist.")
+              .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากรายชื่อที่ไม่อนุญาต")
               .setRequired(true)
           )
       )
@@ -62,37 +62,37 @@ export const data = new SlashCommandBuilder()
   .addSubcommandGroup(group =>
     group
       .setName("config")
-      .setDescription("Configure private voice channel.")
+      .setDescription("⚙️ ตั้งค่าห้องเสียงส่วนตัว")
       .addSubcommand(subcommand =>
         subcommand
           .setName("name")
-          .setDescription("Set name of private voice channel.")
+          .setDescription("💬 ตั้งชื่อของห้องเสียงส่วนตัว")
           .addStringOption(option =>
             option
               .setName("name")
-              .setDescription("Name of private voice channel.")
+              .setDescription("🧾 ชื่อของห้องเสียงส่วนตัว")
               .setRequired(true)
           )
       )
         .addSubcommand(subcommand =>
           subcommand
             .setName("maxusers")
-            .setDescription("Set maximum users in private voice channel.")
+            .setDescription("👥 จำกัดจำนวนผู้ใช้ในห้องเสียงส่วนตัว")
             .addIntegerOption(option =>
               option
                 .setName("maxusers")
-                .setDescription("Maximum users in private voice channel.")
+                .setDescription("🫂 จำนวนสูงสุดของผู้ใช้ในห้องเสียงส่วนตัว")
                 .setRequired(true)
           )
       )
         .addSubcommand(subcommand =>
           subcommand
             .setName("lock")
-            .setDescription("Lock private voice channel.")
+            .setDescription("🔒 ล็อคห้องเสียงส่วนตัว ผู้ใช้ในรายชื่อที่อนุญาตยังสามารถเข้าได้")
             .addBooleanOption(option =>
               option
                 .setName("lock")
-                .setDescription("Lock private voice channel. People in whitelist can still join.")
+                .setDescription("🔑 สถานะการล็อคของห้องเสียงส่วนตัว")
                 .setRequired(true)
           )
       )
@@ -115,7 +115,7 @@ async function updateList(type: "whitelist" | "blacklist", user: GuildMember, ne
 
 export async function execute(interaction: CommandInteraction) {
   if (!interaction.guild) {
-    await interaction.reply("This command can only be used in a server.");
+    await interaction.reply("❌ คำสั่งนี้ต้องใช้ในเซิร์ฟเวอร์เท่านั้น.");
     return;
   }
   const guildUser = interaction.member as GuildMember;
@@ -126,7 +126,7 @@ export async function execute(interaction: CommandInteraction) {
 
   if (!userVcConfig) {
     // should never happen
-    await interaction.reply("Failed to load user voice channel configuration.");
+    await interaction.reply("⚠️ ไม่พบการตั้งค่าห้องเสียงส่วนตัวสำหรับผู้ใช้นี้.");
     return;
   }
   const blacklist = userVcConfig.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[]; // nig*** list
@@ -136,12 +136,12 @@ export async function execute(interaction: CommandInteraction) {
     case "whitelist": {
       const user = (interaction.options as CommandInteractionOptionResolver).getUser("user");
       if (!user) {
-        await interaction.reply("User must be a valid user.");
+        await interaction.reply("❌ ไม่พบผู้ใช้")
         return;
       }
       if (subcommand === "add") {
         if (whitelist.find((e) => e == user.id)) {
-          await interaction.reply("User " + user.displayName + " already added to whitelist")
+          await interaction.reply("⚠️ ผู้ใช้ดังกล่าวอยู่ในรายชื่อที่ได้รับอนุญาตอยู่แล้ว")
           return;
         }
         whitelist.push(user.id);
@@ -151,30 +151,30 @@ export async function execute(interaction: CommandInteraction) {
           await updateList('whitelist', guildUser, blacklist);
         }
         await updateList('whitelist', guildUser, whitelist);
-        await interaction.reply("Added user to whitelist." + (existingVC ? " Recreate voice channel to apply changes." : ""));
+        await interaction.reply("✅ เพิ่มผู้ใช้ลงในรายชื่อที่อนุญาตเสร็จสิ้น");
         return;
       } else if (subcommand === "remove") {
         const index = whitelist.indexOf(user.id);
         if (index > -1) {
           whitelist.splice(index, 1);
         } else {
-          await interaction.reply("User is not in whitelist.");
+          await interaction.reply("❌ ผู้ใช้ไม่ได้อยู่ในรายชื่อที่ได้รับอนุญาต");
           return;
         }
         await updateList('whitelist', guildUser, whitelist);
-        await interaction.reply("Removed user from whitelist." + (existingVC ? " Recreate voice channel to apply changes." : ""));
+        await interaction.reply("✅ ลบผู้ใช้ออกจากรายชื่อที่อนุญาตเสร็จสิ้น");
         return;
       }
     }
     case "blacklist": {
       const user = (interaction.options as CommandInteractionOptionResolver).getUser("user");
       if (!user) {
-        await interaction.reply("User must be a valid user.");
+        await interaction.reply("❌ ไม่พบผู้ใช้")
         return;
       }
       if (subcommand === "add") {
         if (blacklist.find((e) => e == user.id)) {
-          await interaction.reply("User " + user.displayName + " already added to blacklist")
+          await interaction.reply("⚠️ ผู้ใช้ดังกล่าวอยู่ในรายชื่อที่ไม่ได้รับอนุญาตอยู่แล้ว")
           return;
         }
         blacklist.push(user.id);
@@ -184,18 +184,18 @@ export async function execute(interaction: CommandInteraction) {
           await updateList('whitelist', guildUser, whitelist);
         }
         await updateList('blacklist', guildUser, blacklist);
-        await interaction.reply("Added user to blacklist." + (existingVC ? " Recreate voice channel to apply changes." : ""));
+        await interaction.reply("✅ เพิ่มผู้ใช้ลงในรายชื่อที่ไม่อนุญาตเสร็จสิ้น");
         return;
       } else if (subcommand === "remove") {
         const index = blacklist.indexOf(user.id);
         if (index > -1) {
           blacklist.splice(index, 1);
         } else {
-          await interaction.reply("User is not in blacklist.");
+          await interaction.reply("❌ ผู้ใช้ไม่ได้อยู่ในรายชื่อที่ไม่ได้รับอนุญาต");
           return;
         }
         await updateList('blacklist', guildUser, blacklist);
-        await interaction.reply("Removed user from blacklist." + (existingVC ? " Recreate voice channel to apply changes." : ""));
+        await interaction.reply("✅ ลบผู้ใช้ออกจากรายชื่อที่ไม่อนุญาตเสร็จสิ้น");
         return;
       }
     }
@@ -204,15 +204,15 @@ export async function execute(interaction: CommandInteraction) {
         try {
           const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
           if (!name) {
-            await interaction.reply("Name must be a valid string.");
+            await interaction.reply("❌ กรุณาใส่ชื่อ");
             return;
           }
           if (name.length < 1 || name.length > 100) {
-            await interaction.reply("Name must be between 1 and 100 characters.");
+            await interaction.reply("❌ ชื่อต้องมีความยาวระหว่าง 1 ถึง 100 ตัวอักษร");
             return;
           }
           if (name == userVcConfig?.name) {
-            await interaction.reply("Name is already set to that value.");
+            await interaction.reply("❓ ชื่อห้องเสียงส่วนตัวถูกตั้งเป็น " + name + " อยู่แล้ว");
             return;
           }
           await prisma.voiceChannel.update({
@@ -226,21 +226,21 @@ export async function execute(interaction: CommandInteraction) {
           if (existingVC) {
             await (existingVC as GuildChannel).setName("⭐ " + name);
           }
-          await interaction.reply("Set name of private voice channel.");
+          await interaction.reply("✅ ตั้งชื่อห้องเสียงส่วนตัวเป็น " + name + " เสร็จสิ้น");
         } catch (error) {
           console.error(error);
-          await interaction.reply("Failed to set name of private voice channel.");
+          await interaction.reply("❌ ไม่สามารถตั้งชื่อห้องเสียงส่วนตัวได้");
           return;
         }
       } else if (subcommand === "maxusers") {
         try {
           const maxUsers = (interaction.options as CommandInteractionOptionResolver).getInteger("maxusers");
           if (!maxUsers || maxUsers < 0 || maxUsers > 99) {
-            await interaction.reply("Maximum users must be a valid number between 0 and 99.");
+            await interaction.reply("❌ จำนวนผู้ใช้ต้องอยู่ระหว่าง 0 ถึง 99");
             return;
           }
           if (maxUsers == userVcConfig?.maxUsers) {
-            await interaction.reply("Maximum users is already set to that value.");
+            await interaction.reply("❓ จำนวนผู้ใช้ในห้องเสียงส่วนตัวถูกตั้งเป็น " + maxUsers + " อยู่แล้ว");
             return;
           }
           await prisma.voiceChannel.update({
@@ -254,17 +254,17 @@ export async function execute(interaction: CommandInteraction) {
           if (existingVC) {
             await (existingVC as VoiceChannel).setUserLimit(maxUsers);
           }
-          await interaction.reply("Set maximum users to " + maxUsers + " in private voice channel.");
+          await interaction.reply("✅ ตั้งจำนวนผู้ใช้ในห้องเสียงส่วนตัวเป็น " + maxUsers + " เสร็จสิ้น");
         } catch (error) {
           console.error(error);
-          await interaction.reply("Failed to set maximum users in private voice channel.");
+          await interaction.reply("❌ ไม่สามารถตั้งจำนวนผู้ใช้ในห้องเสียงส่วนตัวได้");
           return;
         }
       } else if (subcommand === "lock") {
         try {
           const lock = (interaction.options as CommandInteractionOptionResolver).getBoolean("lock");
           if (lock == !userVcConfig.public) {
-            await interaction.reply("Private voice channel is already locked.");
+            await interaction.reply("❓ สถานะการล็อคของห้องเสียงส่วนตัวถูกตั้งเป็น " + (lock ? "ล็อค" : "ปลดล็อค") + " อยู่แล้ว");
             return;
           }
           await prisma.voiceChannel.update({
@@ -280,10 +280,10 @@ export async function execute(interaction: CommandInteraction) {
               Connect: !lock
             });
           }
-          await interaction.reply("Locked private voice channel.");
+          await interaction.reply("✅ ตั้งสถานะการล็อคของห้องเสียงส่วนตัวเป็น " + (lock ? "ล็อค" : "ปลดล็อค") + " เสร็จสิ้น");
         } catch (error) {
           console.error(error);
-          await interaction.reply("Failed to lock private voice channel.");
+          await interaction.reply("❌ ไม่สามารถตั้งสถานะการล็อคของห้องเสียงส่วนตัวได้");
           return;
         }
       }

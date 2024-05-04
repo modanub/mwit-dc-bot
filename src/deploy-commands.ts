@@ -33,3 +33,19 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
     console.error(error);
   }
 }
+
+export async function undeployCommands({ guildId }: DeployCommandsProps) {
+  try {
+    console.log("Started refreshing application (/) commands.");
+    await rest.put(
+      Routes.applicationGuildCommands(config.DISCORD_CLIENT_ID, guildId),
+      {
+        body: [],
+      }
+    );
+
+    console.log("Successfully reloaded application (/) commands.");
+  } catch (error) {
+    console.error(error);
+  }
+}

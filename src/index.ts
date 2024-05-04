@@ -6,7 +6,7 @@ import { deployEvents } from "./deploy-events";
 import { setUserColorRole } from "./funcs/colorRole";
 
 const client = new Client({
-  intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildVoiceStates", "GuildMessageReactions", 'GuildEmojisAndStickers', 'GuildMembers', 'GuildModeration'],
+  intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildVoiceStates", "GuildMessageReactions", 'GuildEmojisAndStickers', 'GuildMembers', 'GuildModeration', 'MessageContent'],
 });
 
 client.once("ready", async () => {
