@@ -58,10 +58,10 @@ export async function getColorRoles(guild: Guild) {
 
 async function removeAllColorFromUser(user: GuildMember) {
     const colorRoles = await getColorRoles(user.guild);
-    user.roles.cache.forEach(role => {
-        const colorRole = colorRoles.find(colorRole => colorRole.roleId === role.id);
+    await user.roles.cache.forEach(async (role) => {
+        const colorRole = colorRoles.find(colorRole => colorRole.roleId == role.id);
         if (colorRole) {
-            user.roles.remove(role);
+            await user.roles.remove(role);
         }
     });
 }

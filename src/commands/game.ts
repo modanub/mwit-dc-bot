@@ -1,4 +1,4 @@
-import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, AutocompleteInteraction, CommandInteraction, CommandInteractionOptionResolver, EmbedBuilder, GuildMember, PermissionFlagsBits, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
+import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, AutocompleteInteraction, CommandInteraction, CommandInteractionOptionResolver, EmbedBuilder, GuildMember, PermissionFlagsBits, PermissionsBitField, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { createGameRole, deleteGameRole, getGameRole, getGameRoles } from "../funcs/gameRole";
 
 export const data = new SlashCommandBuilder()
@@ -14,12 +14,6 @@ export const data = new SlashCommandBuilder()
                     .setDescription("Name of the game role.")
                     .setRequired(true)
                 )
-            .addRoleOption(option =>
-                option
-                    .setName("role")
-                    .setDescription("Role to assign.")
-                    .setRequired(true)
-            )
         )
     .addSubcommand(subcommand =>
         subcommand
@@ -82,10 +76,13 @@ export async function execute(interaction: CommandInteraction) {
     const subcommand = (interaction.options as CommandInteractionOptionResolver).getSubcommand();
     switch (subcommand) {
         case "add": {
+            if (!(interaction.member?.permissions as PermissionsBitField).has(PermissionFlagsBits.Administrator)) { return interaction.reply("❌ You must be an administrator to run this command."); }
             const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
-            const role = (interaction.options as CommandInteractionOptionResolver).getRole("role");
-            if (!name || !role) { return interaction.reply("Invalid parameters."); }
+            if (!name) { return interaction.reply("Invalid parameters."); }
             try {
+                const role = await interaction.guild.roles.create({
+                    name: name,
+                });
                 await createGameRole(interaction.guild, role.id, name);
                 return interaction.reply(`Game role ${name} created.`);
             } catch (error) {
@@ -94,6 +91,7 @@ export async function execute(interaction: CommandInteraction) {
             }
         }
         case "remove": {
+            if (!(interaction.member?.permissions as PermissionsBitField).has(PermissionFlagsBits.Administrator)) { return interaction.reply("❌ You must be an administrator to run this command."); }
             const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
             if (!name) { return interaction.reply("Invalid parameters."); }
             try {
