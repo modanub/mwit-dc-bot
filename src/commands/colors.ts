@@ -1,4 +1,4 @@
-import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, BaseGuildTextChannel, CommandInteraction, EmbedBuilder, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
+import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, BaseGuildTextChannel, CommandInteraction, EmbedBuilder, GuildMember, GuildMemberRoleManager, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { getColorRoles } from "../funcs/colorRole";
 
 export const data = new SlashCommandBuilder()
@@ -11,7 +11,7 @@ export async function execute(interaction: CommandInteraction) {
         return interaction.reply({ content: "❌ ไม่สามารถใช้คำสั่งในช่องนี้!", ephemeral: true });
     }
     const colorRoles = await getColorRoles(interaction.guild);
-    if (!colorRoles.length) { return interaction.reply("❓ ไม่มีสีใดๆ ในระบบ."); } 
+    if (!colorRoles.length) { return interaction.reply("❓ ไม่มีสีใดๆ ในระบบ"); } 
     const embed = new EmbedBuilder()
         .setTitle("🎨 รายชื่อสีชื่อ")
         .setColor("#3D7AED");
@@ -24,6 +24,7 @@ export async function execute(interaction: CommandInteraction) {
             return new StringSelectMenuOptionBuilder()
                 .setLabel(role.color)
                 .setValue(role.roleId)
+                .setDefault((interaction.member as GuildMember).roles.cache.has(role.roleId))
         }));
     const row = new ActionRowBuilder()
         .addComponents(menuSelector);

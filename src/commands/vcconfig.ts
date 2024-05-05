@@ -5,60 +5,60 @@ import { getExistingVC, getVCConfig } from "../funcs/joinToCreateVC";
 export const data = new SlashCommandBuilder()
   .setName("vcconfig")
   .setDescription("⚙️ ตั้งค่าห้องเสียงส่วนตัว")
-  .addSubcommandGroup(group =>
-    group
-      .setName("whitelist")
-      .setDescription("⚙️ ตั้งค่าผู้ใช้ที่อนุญาตให้เข้าถึงห้องเสียงส่วนตัว")
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName("add")
-          .setDescription("✅ เพิ่มผู้ใช้เข้าสู่รายชื่อที่อนุญาต")
-          .addUserOption(option =>
-            option
-              .setName("user")
-              .setDescription("🧑 ผู้ใช้ที่ต้องการเพิ่มในรายชื่อที่อนุญาต")
-              .setRequired(true)
-          )
-      )
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName("remove")
-          .setDescription("❌ ลบผู้ใช้ออกจากรายชื่อที่อนุญาต")
-          .addUserOption(option =>
-            option
-              .setName("user")
-              .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากรายชื่อที่อนุญาต")
-              .setRequired(true)
-          )
-      )
-  )
-  .addSubcommandGroup(group =>
-    group
-      .setName("blacklist")
-      .setDescription("⚙️ ตั้งค่าผู้ใช้ที่ไม่อนุญาตให้เข้าถึงห้องเสียงส่วนตัว")
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName("add")
-          .setDescription("✅ เพิ่มผู้ใช้เข้าสู่รายชื่อที่ไม่อนุญาต")
-          .addUserOption(option =>
-            option
-              .setName("user")
-              .setDescription("🧑 ผู้ใช้ที่ต้องการเพิ่มในรายชื่อที่ไม่อนุญาต")
-              .setRequired(true)
-          )
-      )
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName("remove")
-          .setDescription("❌ ลบผู้ใช้ออกจากรายชื่อที่ไม่อนุญาต")
-          .addUserOption(option =>
-            option
-              .setName("user")
-              .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากรายชื่อที่ไม่อนุญาต")
-              .setRequired(true)
-          )
-      )
-  )
+  // .addSubcommandGroup(group =>
+  //   group
+  //     .setName("whitelist")
+  //     .setDescription("⚙️ ตั้งค่าผู้ใช้ที่อนุญาตให้เข้าถึงห้องเสียงส่วนตัว")
+  //     .addSubcommand(subcommand =>
+  //       subcommand
+  //         .setName("add")
+  //         .setDescription("✅ เพิ่มผู้ใช้เข้าสู่รายชื่อที่อนุญาต")
+  //         .addUserOption(option =>
+  //           option
+  //             .setName("user")
+  //             .setDescription("🧑 ผู้ใช้ที่ต้องการเพิ่มในรายชื่อที่อนุญาต")
+  //             .setRequired(true)
+  //         )
+  //     )
+  //     .addSubcommand(subcommand =>
+  //       subcommand
+  //         .setName("remove")
+  //         .setDescription("❌ ลบผู้ใช้ออกจากรายชื่อที่อนุญาต")
+  //         .addUserOption(option =>
+  //           option
+  //             .setName("user")
+  //             .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากรายชื่อที่อนุญาต")
+  //             .setRequired(true)
+  //         )
+  //     )
+  // )
+  // .addSubcommandGroup(group =>
+  //   group
+  //     .setName("blacklist")
+  //     .setDescription("⚙️ ตั้งค่าผู้ใช้ที่ไม่อนุญาตให้เข้าถึงห้องเสียงส่วนตัว")
+  //     .addSubcommand(subcommand =>
+  //       subcommand
+  //         .setName("add")
+  //         .setDescription("✅ เพิ่มผู้ใช้เข้าสู่รายชื่อที่ไม่อนุญาต")
+  //         .addUserOption(option =>
+  //           option
+  //             .setName("user")
+  //             .setDescription("🧑 ผู้ใช้ที่ต้องการเพิ่มในรายชื่อที่ไม่อนุญาต")
+  //             .setRequired(true)
+  //         )
+  //     )
+  //     .addSubcommand(subcommand =>
+  //       subcommand
+  //         .setName("remove")
+  //         .setDescription("❌ ลบผู้ใช้ออกจากรายชื่อที่ไม่อนุญาต")
+  //         .addUserOption(option =>
+  //           option
+  //             .setName("user")
+  //             .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากรายชื่อที่ไม่อนุญาต")
+  //             .setRequired(true)
+  //         )
+  //     )
+  // )
   .addSubcommandGroup(group =>
     group
       .setName("config")
@@ -96,6 +96,17 @@ export const data = new SlashCommandBuilder()
                 .setRequired(true)
           )
       )
+    .addSubcommand(subcommand =>
+      subcommand
+          .setName("kick")
+          .setDescription("👢 ลบผู้ใช้ออกจากห้องเสียงส่วนตัว")
+          .addUserOption(option =>
+              option
+                  .setName("user")
+                  .setDescription("🧑 ผู้ใช้ที่ต้องการลบออกจากห้องเสียงส่วนตัว")
+                  .setRequired(true)
+        )
+    )
   )
 
 async function updateList(type: "whitelist" | "blacklist", user: GuildMember, newData: string[]) {
@@ -129,6 +140,19 @@ export async function execute(interaction: CommandInteraction) {
     await interaction.reply("⚠️ ไม่พบการตั้งค่าห้องเสียงส่วนตัวสำหรับผู้ใช้นี้.");
     return;
   }
+  if (subcommand === "kick") {
+    if (!existingVC) { return await interaction.reply("❌ ไม่พบห้องเสียงส่วนตัวของคุณ"); }
+    const user = (interaction.options as CommandInteractionOptionResolver).getUser("user");
+    if (!user) { return await interaction.reply("❌ ไม่พบผู้ใช้"); }
+    if (user.id == guildUser.id) { return await interaction.reply("❌ คุณไม่สามารถลบตัวเองออกจากห้องเสียงส่วนตัวได้"); }
+    const member = await interaction.guild.members.fetch(user.id);
+    if (!member) { return await interaction.reply("❌ ไม่พบผู้ใช้"); }
+    if (userVcConfig.id != guildUser.id) { return await interaction.reply("❌ คุณไม่ใช่เจ้าของของห้องเสียงส่วนตัว"); }
+    if (member.voice.channelId != (existingVC as VoiceChannel).id) { return await interaction.reply("❌ ผู้ใช้ไม่ได้อยู่ในห้องเสียงส่วนตัวของคุณ"); }
+    await member.voice.disconnect();
+    return await interaction.reply("✅ ลบผู้ใช้ออกจากห้องเสียงส่วนตัวเสร็จสิ้น");
+  }
+    
   const blacklist = userVcConfig.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[]; // nig*** list
   const whitelist = userVcConfig.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[];
   console.log(userVcConfig);

@@ -69,7 +69,7 @@ async function removeAllColorFromUser(user: GuildMember) {
 export async function setUserColorRole(user: GuildMember, role: string, interaction?: StringSelectMenuInteraction) {
     if (user.roles.cache.some(r => r.id === role)) {
         if (interaction) {
-            await interaction.reply({ content: `❌ You already have the color role <@&${role}>.`, ephemeral: true });
+            await interaction.followUp({ content: `❌ ตุณมีสีนี้อยู่แล้ว`, ephemeral: true });
         }
         return;
     }
@@ -77,7 +77,7 @@ export async function setUserColorRole(user: GuildMember, role: string, interact
         await removeAllColorFromUser(user);
         user.roles.add(role);
         console.log(`Color role ${role} added to user ${user.id}`);
-        if (interaction) await interaction.reply({ content: `✅ Equipped color role <@&${role}>.`, ephemeral: true });
+        if (interaction) await interaction.followUp({ content: `✅ การตั้งค่าสีชื่อ <@&${role}> สำเร็จ`, ephemeral: true })
     } catch (error) {
         console.error(error);
     }

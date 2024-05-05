@@ -4,6 +4,7 @@ import { getCommands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { deployEvents } from "./deploy-events";
 import { setUserColorRole } from "./funcs/colorRole";
+import { setUserGameRole } from "./funcs/gameRole";
 
 const client = new Client({
   intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildVoiceStates", "GuildMessageReactions", 'GuildEmojisAndStickers', 'GuildMembers', 'GuildModeration', 'MessageContent'],
@@ -26,7 +27,11 @@ client.on("interactionCreate", async (interaction) => {
     if (!guild || !stringselectmenu.member) return;
     console.log(stringselectmenu.customId);
     if (stringselectmenu.customId === "color_role_selector") {
+      await interaction.deferUpdate();
       await setUserColorRole(stringselectmenu.member as GuildMember, stringselectmenu.values[0], stringselectmenu);
+    } else if (stringselectmenu.customId === "game_role_selector") {
+      await interaction.deferUpdate();
+      await setUserGameRole(stringselectmenu.member as GuildMember, stringselectmenu.values, stringselectmenu);
     }
   } else if (interaction.isAutocomplete()) {
     const { commandName } = interaction;
@@ -48,7 +53,7 @@ client.on("interactionCreate", async (interaction) => {
     } catch (error) {
       console.error(error);
       await interaction.reply({
-        content: "There was an error while executing this command!",
+        content: "🔰 เกิดข้อผิดพลาดขึ้นในการเรียกใช้งานคำสั่ง",
         ephemeral: true,
       });
     }

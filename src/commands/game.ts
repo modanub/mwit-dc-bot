@@ -3,26 +3,32 @@ import { createGameRole, deleteGameRole, getGameRole, getGameRoles } from "../fu
 
 export const data = new SlashCommandBuilder()
     .setName("game")
-    .setDescription("Game color roles.")
+    .setDescription("🎮 คำสั่งยศเกม")
     .addSubcommand(subcommand =>
         subcommand
             .setName("add")
-            .setDescription("Add a game role. (Admin only)")
+            .setDescription("⚙️ เพิ่มยศเกมใหม่ (แอดมินเท่านั้น)")
             .addStringOption(option =>
                 option
                     .setName("name")
-                    .setDescription("Name of the game role.")
+                    .setDescription("🧾 ชื่อเกม")
                     .setRequired(true)
                 )
+            .addRoleOption(option =>
+                option
+                    .setName("role")
+                    .setDescription("🛡️ ยศที่ต้องการให้เป็นยศเกมนี้")
+                    .setRequired(true)
+            )
         )
     .addSubcommand(subcommand =>
         subcommand
             .setName("remove")
-            .setDescription("Remove a game role. (Admin only)")
+            .setDescription("⚙️ ลบยศเกม (แอดมินเท่านั้น)")
             .addStringOption(option =>
                 option
                 .setName("name")
-                .setDescription("Name of the game role.")
+                .setDescription("🧾 ชื่อเกม")
                 .setRequired(true)
                 .setAutocomplete(true)
             )
@@ -30,16 +36,16 @@ export const data = new SlashCommandBuilder()
     .addSubcommand(subcommand =>
         subcommand
             .setName("list")
-            .setDescription("List game roles.")
+            .setDescription("🎮 รายชื่อยศเกม")
         )
     .addSubcommand(subcommand =>
         subcommand
             .setName("join")
-            .setDescription("Join a game role.")
+            .setDescription("🧪 เพิ่มยศเกมที่คุณเล่น")
             .addStringOption(option =>
                 option
                 .setName("name")
-                .setDescription("Name of the game role.")
+                .setDescription("🧾 ชื่อเกม")
                 .setRequired(true)
                 .setAutocomplete(true)
             )
@@ -47,11 +53,11 @@ export const data = new SlashCommandBuilder()
     .addSubcommand(subcommand =>
         subcommand
             .setName("leave")
-            .setDescription("Leave a game role.")
+            .setDescription("🧪 ลบยศเกมที่คุณเล่น")
             .addStringOption(option =>
                 option
                 .setName("name")
-                .setDescription("Name of the game role.")
+                .setDescription("🧾 ชื่อเกม")
                 .setRequired(true)
                 .setAutocomplete(true)
             )
@@ -60,7 +66,7 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
     if (!interaction.guild) { return null; }
     const subcommand = interaction.options.getSubcommand();
     const focusedValue = interaction.options.getFocused();
-    if (subcommand === "remove" || subcommand === "join" || subcommand === "leave") {
+    if (subcommand === "remove" || subcommand === "join") {
         const gameRoles = await getGameRoles(interaction.guild);
         const options = gameRoles.map(role => {
             return {
@@ -70,77 +76,102 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
         });
         return interaction.respond(options.filter(option => option.name.includes(focusedValue)).slice(0, 25));      
     }
+    if (subcommand === "leave") {
+        const member = interaction.member as GuildMember;
+        if (!member) { return null; }
+        const gameRoles = await getGameRoles(interaction.guild);
+        const options = gameRoles.filter(role => member.roles.cache.has(role.roleId)).map(role => {
+            return {
+                name: role.game,
+                value: role.game
+            }
+        });
+        return interaction.respond(options.filter(option => option.name.includes(focusedValue)).slice(0, 25));
+    }
 }
 export async function execute(interaction: CommandInteraction) {
-    if (!interaction.guild) { return interaction.reply("❌ This command must be run in a server."); }
+    if (!interaction.guild) { return interaction.reply({ content: "❌ คำสั่งนี้ต้องใช้ในเซิร์ฟเวอร์เท่านั้น", ephemeral: true }); }
     const subcommand = (interaction.options as CommandInteractionOptionResolver).getSubcommand();
     switch (subcommand) {
         case "add": {
-            if (!(interaction.member?.permissions as PermissionsBitField).has(PermissionFlagsBits.Administrator)) { return interaction.reply("❌ You must be an administrator to run this command."); }
+            if (!(interaction.member?.permissions as PermissionsBitField).has(PermissionFlagsBits.Administrator)) { return interaction.reply({ content: "❌ คุณไม่มีสิทธิ์ในการใช้คำสั่งนี้", ephemeral: true }); }
             const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
-            if (!name) { return interaction.reply("Invalid parameters."); }
+            if (!name) { return interaction.reply({ content: "❌ คำสั่งไม่ถูกต้อง", ephemeral: true }); }
             try {
-                const role = await interaction.guild.roles.create({
-                    name: name,
-                });
+                const role = (interaction.options as CommandInteractionOptionResolver).getRole("role");
+                if (!role) { return interaction.reply({ content: "❌ คำสั่งไม่ถูกต้อง", ephemeral: true }); }
                 await createGameRole(interaction.guild, role.id, name);
-                return interaction.reply(`Game role ${name} created.`);
+                return interaction.reply({ content: `✅ สร้างยศเกม ${name} เสร็จสิ้น`, ephemeral: true });
             } catch (error) {
                 console.error(error);
-                return interaction.reply("⚠️ An error occurred while creating the game role.");
+                return interaction.reply({ content: "⚠️ เกิดข้อผิดพลาดขณะสร้างยศเกม", ephemeral: true });
             }
         }
         case "remove": {
-            if (!(interaction.member?.permissions as PermissionsBitField).has(PermissionFlagsBits.Administrator)) { return interaction.reply("❌ You must be an administrator to run this command."); }
+            if (!(interaction.member?.permissions as PermissionsBitField).has(PermissionFlagsBits.Administrator)) { return interaction.reply({ content: "❌ คุณไม่มีสิทธิ์ในการใช้คำสั่งนี้", ephemeral: true }); }
             const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
-            if (!name) { return interaction.reply("Invalid parameters."); }
+            if (!name) { return interaction.reply({ content: "❌ คำสั่งไม่ถูกต้อง", ephemeral: true }); }
             try {
                 await deleteGameRole(interaction.guild, name);
-                return interaction.reply(`Game role ${name} deleted.`);
+                return interaction.reply({ content: `✅ ลบยศเกม ${name} เสร็จสิ้น`, ephemeral: true });
             } catch (error) {
                 console.error(error);
-                return interaction.reply("⚠️ An error occurred while deleting the game role.");
+                return interaction.reply({ content: "⚠️ เกิดข้อผิดพลาดขณะลบยศเกม", ephemeral: true });
             }
         }
         case "list": {
             const gameRoles = await getGameRoles(interaction.guild);
-            if (gameRoles.length === 0) { return interaction.reply("No game roles found."); }
+            if (gameRoles.length === 0) { return interaction.reply({ content: "❌ ไม่มียศเกมในเซิร์ฟเวอร์นี้", ephemeral: true }); }
+            const guildmember = interaction.member as GuildMember;
             const embed = new EmbedBuilder()
-                .setTitle("🎮 Game Roles")
+                .setTitle("🎮 รายชื่อยศเกม")
                 .setColor("#ED9A3D")
                 .setDescription(gameRoles.map(role => `- <@&${role.roleId}> - ${role.game}`).join("\n"));
-            return interaction.reply({ embeds: [embed] });
+            const selector = new StringSelectMenuBuilder()
+                .setCustomId("game_role_selector")
+                .setPlaceholder("🎮 เลือกยศเกมที่ต้องการ")
+                .setMinValues(0)
+                .setMaxValues(5)
+                .addOptions(gameRoles.map(role => {
+                    return new StringSelectMenuOptionBuilder()
+                        .setLabel(role.game)
+                        .setValue(role.roleId)
+                        .setDefault(guildmember.roles.cache.has(role.roleId))
+                }));
+            const row = new ActionRowBuilder()
+                .addComponents(selector);
+            return interaction.reply({ embeds: [embed], components: [row as unknown as APIActionRowComponent<APIMessageActionRowComponent>], ephemeral: true });
         }
         case "join": {
             const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
-            if (!name) { return interaction.reply("Invalid parameters."); }
+            if (!name) { return interaction.reply({ content: "❌ คำสั่งไม่ถูกต้อง", ephemeral: true }); }
             const gameRole = await getGameRole(interaction.guild, name);
-            if (!gameRole) { return interaction.reply("Game role not found."); }
+            if (!gameRole) { return interaction.reply({ content: "❌ ไม่พบยศเกมนี้", ephemeral: true }); }
             const member = interaction.member as GuildMember;
-            if (!member) { return interaction.reply("❌ This command must be run by a member."); }
-            if (member.roles.cache.has(gameRole.roleId)) { return interaction.reply("You already have this role."); }
+            if (!member) { return interaction.reply({ content: "❌ คำสั่งนี้ต้องใช้โดยสมาชิกเท่านั้น", ephemeral: true }); }
+            if (member.roles.cache.has(gameRole.roleId)) { return interaction.reply({ content: "🧾 คุณมียศเกมนี่อยู่แล้ว", ephemeral: true }) }
             try {
                 await member.roles.add(gameRole.roleId);
-                return interaction.reply(`Joined game role ${name}.`);
+                return interaction.reply({ content: `✅ เพิ่มยศเกม ${name} เสร็จสิ้น`, ephemeral: true });
             } catch (error) {
                 console.error(error);
-                return interaction.reply("⚠️ An error occurred while joining the game role.");
+                return interaction.reply({ content: "⚠️ เกิดข้อผิดพลาดขณะเพิ่มยศเกม", ephemeral: true });
             }
         }
         case "leave": {
             const name = (interaction.options as CommandInteractionOptionResolver).getString("name");
-            if (!name) { return interaction.reply("Invalid parameters."); }
+            if (!name) { return interaction.reply({ content: "❌ คำสั่งไม่ถูกต้อง", ephemeral: true }); }
             const gameRole = await getGameRole(interaction.guild, name);
-            if (!gameRole) { return interaction.reply("Game role not found."); }
+            if (!gameRole) { return interaction.reply({ content: "❌ ไม่พบยศเกมนี้", ephemeral: true }); }
             const member = interaction.member as GuildMember;
-            if (!member) { return interaction.reply("❌ This command must be run by a member."); }
-            if (!member.roles.cache.has(gameRole.roleId)) { return interaction.reply("You don't have this role."); }
+            if (!member) { return interaction.reply({ content: "❌ คำสั่งนี้ต้องใช้โดยสมาชิกเท่านั้น", ephemeral: true }); }
+            if (!member.roles.cache.has(gameRole.roleId)) { return interaction.reply({ content: "🧾 คุณไม่มียศเกมนี่", ephemeral: true }) }
             try {
                 await member.roles.remove(gameRole.roleId);
-                return interaction.reply(`Left game role ${name}.`);
+                return interaction.reply({ content: `✅ ลบยศเกม ${name} เสร็จสิ้น`, ephemeral: true });
             } catch (error) {
                 console.error(error);
-                return interaction.reply("⚠️ An error occurred while leaving the game role. Maybe I don't have permission to manage roles or the role is higher than mine.");
+                return interaction.reply({ content: "⚠️ เกิดข้อผิดพลาดขณะลบยศเกม", ephemeral: true });
             }
         }
     }

@@ -1,8 +1,8 @@
 import { CommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.js";
 
 export const data = new SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("💬 แสดงรายละเอียดความล่าช้าในการสื่อสารของบอทกับระบบ");
+  .setName("ping")
+  .setDescription("💬 แสดงรายละเอียดความล่าช้าในการสื่อสารของบอทกับระบบ");
 
 export async function execute(interaction: CommandInteraction) {
   const embed = new EmbedBuilder()

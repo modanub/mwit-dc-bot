@@ -3,7 +3,7 @@ import { getColorRoles } from "../funcs/colorRole";
 
 export const data = new SlashCommandBuilder()
     .setName("colorall")
-    .setDescription("ตั้งค่าสีให้กับทุกคนในเซิร์ฟเวอร์")
+    .setDescription("🎨 ตั้งค่าสีให้กับทุกคนในเซิร์ฟเวอร์")
     .addStringOption(option =>
         option
         .setName("color")
