@@ -1,6 +1,6 @@
 import { Guild, VoiceChannel } from "@prisma/client";
 import prisma from "../db";
-import { Channel, ChannelType, GuildMember, GuildVoiceChannelResolvable, OverwriteResolvable } from "discord.js";
+import { Channel, ChannelType, GuildMember, GuildVoiceChannelResolvable, OverwriteResolvable, PermissionsBitField, VoiceBasedChannel, VoiceChannel as vc } from "discord.js";
 import { client } from "..";
 
 export async function getVCConfig(userId: string, createIfNull: boolean = false): Promise<VoiceChannel | null> {
@@ -43,6 +43,43 @@ export function getExistingVC(user: GuildMember, name: string): GuildVoiceChanne
     return user.guild.channels.cache.find(channel => channel.type === ChannelType.GuildVoice && channel.name === name) as GuildVoiceChannelResolvable;
 }
 
+export function constructPermOverwrites(blacklist: string[], whitelist: string[]) {
+    let overwrites: OverwriteResolvable[] = [];
+    blacklist = blacklist.filter((value, index, self) => value && self.indexOf(value) === index);
+    whitelist = whitelist.filter((value, index, self) => value && self.indexOf(value) === index);
+    for (const userId of blacklist) {
+        overwrites.push({
+            id: userId,
+            deny: [PermissionsBitField.Flags.Connect],
+            allow: [PermissionsBitField.Flags.ViewChannel]
+        });
+    }
+    for (const userId of whitelist) {
+        overwrites.push({
+            id: userId,
+            allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak, PermissionsBitField.Flags.Stream]
+        });
+    }
+    return overwrites;
+}
+
+export async function refreshChannelPermOverwrites(channel: vc, owner: GuildMember) {
+    const userConfig = await getVCConfig(owner.id);
+    if (!userConfig) {
+        console.warn("Using default values for user ID " + owner.id);
+    }
+    const whitelist = userConfig?.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[];
+    const blacklist = userConfig?.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[];
+    if (userConfig?.public) {
+        whitelist.push(owner.guild.roles.everyone.id);
+    } else {
+        blacklist.push(owner.guild.roles.everyone.id);
+    }
+    const overwrites = constructPermOverwrites(blacklist, whitelist);
+    console.log(overwrites);
+    await channel.permissionOverwrites.set(overwrites);
+}
+
 export async function createVC(guildId: string, guildConfig: Guild, user: GuildMember) {
     if (!guildConfig) {
         console.error("Guild config not found for guild ID " + guildId);
@@ -56,55 +93,31 @@ export async function createVC(guildId: string, guildConfig: Guild, user: GuildM
     const existingVC = getExistingVC(user, channelName);
     if (existingVC) {
         console.warn("Channel already exists for user ID " + user.id);
-        await user.voice.setChannel(existingVC);
+        try {
+            await user.voice.setChannel(existingVC as VoiceBasedChannel);
+        } catch (error) {
+            console.error(error);
+            await user.voice.disconnect();
+        }
         return;
     }
-    let blacklist: OverwriteResolvable[] = [];
-    let whitelist: OverwriteResolvable[] = [];
-    try {
-        for (const userId of userConfig?.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
-            if (userId === user.id) continue;
-            if (userId === "") continue;
-            console.debug("Whitelisting user ID " + userId + " for user ID " + user.id);
-            whitelist.push({
-                id: userId,
-                allow: ["ViewChannel", "Connect", "Speak", "Stream"]
-            });
-        }
-        for (const userId of userConfig?.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[]) {
-            if (userId === user.id) continue;
-            if (userId === "") continue;
-            console.debug("Blacklisting user ID " + userId + " for user ID " + user.id);
-            blacklist.push({
-                id: userId,
-                deny: ["Connect"],
-                allow: ["ViewChannel"]
-            });
-        }
-    } catch (error) {
-        console.log("An error occurred while processing whitelist/blacklist");
-        console.error(error);
+    const whitelist = userConfig?.whitelist?.replace("[", "").replace("]", "").split(", ") || [] as string[];
+    const blacklist = userConfig?.blacklist?.replace("[", "").replace("]", "").split(", ") || [] as string[];
+    if (userConfig?.public) {
+        whitelist.push(user.guild.roles.everyone.id);
+    } else {
+        blacklist.push(user.guild.roles.everyone.id);
     }
+    console.log("Creating channel " + channelName + " for user ID " + user.id)
+    const overwrites = constructPermOverwrites(blacklist, whitelist);
+    console.log(overwrites);
     try {
         const channel = await user.guild.channels.create({
             type: ChannelType.GuildVoice,
             name: channelName,
             parent: guildConfig.categoryId,
             userLimit: userConfig?.maxUsers || 0,
-            permissionOverwrites: [
-                {
-                    id: user.id,
-                    allow: ["MuteMembers", "DeafenMembers", "PrioritySpeaker", "ViewChannel", "Connect", "Speak", "Stream"]
-                },
-                userConfig?.public ? {
-                    id: user.guild.id,
-                    allow: ["ViewChannel", "Connect", "Speak", "Stream"]
-                } : {
-                    id: user.guild.id,
-                    deny: ["Connect"]
-                },
-
-            ],
+            permissionOverwrites: overwrites
         });
         await user.voice.setChannel(channel);
     } catch (error) {

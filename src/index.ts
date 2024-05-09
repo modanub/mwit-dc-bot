@@ -1,10 +1,10 @@
-import { ActivityType, Client, GuildMember, StringSelectMenuInteraction } from "discord.js";
+import { ActivityType, ButtonInteraction, Client, GuildMember, StringSelectMenuInteraction } from "discord.js";
 import { config } from "./config";
 import { getCommands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { deployEvents } from "./deploy-events";
-import { setUserColorRole } from "./funcs/colorRole";
-import { setUserGameRole } from "./funcs/gameRole";
+import { clHandleButtonInteraction, setUserColorRole } from "./funcs/colorRole";
+import { grHandleButtonInteraction, setUserGameRole } from "./funcs/gameRole";
 
 const client = new Client({
   intents: ["Guilds", "GuildMessages", "DirectMessages", "GuildVoiceStates", "GuildMessageReactions", 'GuildEmojisAndStickers', 'GuildMembers', 'GuildModeration', 'MessageContent'],
@@ -12,7 +12,16 @@ const client = new Client({
 
 client.once("ready", async () => {
   await deployEvents(client);
-  client.user?.setActivity("somewhere", { type: ActivityType.Competing });
+  client.user?.setPresence({
+    activities: [
+      {
+        name: "✨ MWIT Revision Group",
+        type: ActivityType.Watching,
+      },
+    ],
+    afk: false,
+    status: "online",
+  });
   console.log("Discord bot is ready! 🤖");
 });
 
@@ -27,32 +36,33 @@ client.on("interactionCreate", async (interaction) => {
     if (!guild || !stringselectmenu.member) return;
     console.log(stringselectmenu.customId);
     if (stringselectmenu.customId === "color_role_selector") {
-      await interaction.deferUpdate();
       await setUserColorRole(stringselectmenu.member as GuildMember, stringselectmenu.values[0], stringselectmenu);
+      return;
     } else if (stringselectmenu.customId === "game_role_selector") {
-      await interaction.deferUpdate();
       await setUserGameRole(stringselectmenu.member as GuildMember, stringselectmenu.values, stringselectmenu);
+      return;
     }
-  } else if (interaction.isAutocomplete()) {
+  } else if (interaction.isButton()) {
+    const guild = interaction.guild;
+    if (!guild || !interaction.member) return;
+    if (interaction.customId === "show_color_role_selector") {
+      await clHandleButtonInteraction(interaction as ButtonInteraction);
+      return;
+    } else if (interaction.customId === "show_game_role_selector") {
+      await grHandleButtonInteraction(interaction as ButtonInteraction);
+      return;
+    }
+  } else if (interaction.isAutocomplete() || interaction.isCommand()) {
     const { commandName } = interaction;
     const commands = await getCommands();
     const command = commands.find((command) => command.data.name === commandName);
-    if (!command || !command.autocomplete) return;
+    if (!command || (interaction.isAutocomplete() && !command.autocomplete) || (interaction.isCommand() && !command.execute)) return;
     try {
-      await command.autocomplete(interaction)!;
+      if (interaction.isAutocomplete() && command.autocomplete) await command.autocomplete(interaction);
+      else await command.execute(interaction);
     } catch (error) {
       console.error(error);
-    }
-  } else if (interaction.isCommand()) {
-    const { commandName } = interaction;
-    const commands = await getCommands();
-    const command = commands.find((command) => command.data.name === commandName);
-    if (!command) return;
-    try {
-      await command.execute(interaction);
-    } catch (error) {
-      console.error(error);
-      await interaction.reply({
+      if (interaction.isCommand()) await interaction.reply({
         content: "🔰 เกิดข้อผิดพลาดขึ้นในการเรียกใช้งานคำสั่ง",
         ephemeral: true,
       });

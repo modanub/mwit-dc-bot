@@ -1,4 +1,4 @@
-import { ButtonInteraction, CommandInteraction, Guild, GuildMember, Interaction, StringSelectMenuInteraction } from "discord.js";
+import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, ButtonInteraction, CommandInteraction, EmbedBuilder, Guild, GuildMember, Interaction, StringSelectMenuBuilder, StringSelectMenuInteraction, StringSelectMenuOptionBuilder } from "discord.js";
 import prisma from "../db";
 
 export async function createColorRole(guild: Guild, name: string, roleId: string) {
@@ -67,6 +67,7 @@ async function removeAllColorFromUser(user: GuildMember) {
 }
 
 export async function setUserColorRole(user: GuildMember, role: string, interaction?: StringSelectMenuInteraction) {
+    await interaction?.deferUpdate();
     if (user.roles.cache.some(r => r.id === role)) {
         if (interaction) {
             await interaction.followUp({ content: `❌ ตุณมีสีนี้อยู่แล้ว`, ephemeral: true });
@@ -81,4 +82,29 @@ export async function setUserColorRole(user: GuildMember, role: string, interact
     } catch (error) {
         console.error(error);
     }
+}
+
+export async function clHandleButtonInteraction(interaction: ButtonInteraction) {
+    await interaction.deferUpdate();
+      if (!interaction.guild || interaction.channel?.isDMBased()) { await interaction.followUp("❌ คำสั่งนี้ต้องใช้ในเซิร์ฟเวอร์เท่านั้น."); return }
+      const colorRoles = await getColorRoles(interaction.guild);
+      if (!colorRoles.length) { await interaction.followUp("❓ ไม่มีสีใดๆ ในระบบ"); return } 
+      const embed = new EmbedBuilder()
+          .setTitle("🎨 รายชื่อสีชื่อ")
+          .setColor("#3D7AED");
+      const desc = colorRoles.map(role => `- <@&${role.roleId}> - ${role.color}`).join("\n");
+      embed.setDescription(desc);
+      const menuSelector = new StringSelectMenuBuilder()
+          .setCustomId("color_role_selector")
+          .setPlaceholder("🎨 เลือกสีชื่อที่ต้องการ")
+          .addOptions(colorRoles.map(role => {
+              return new StringSelectMenuOptionBuilder()
+                  .setLabel(role.color)
+                  .setValue(role.roleId)
+                  .setDefault((interaction.member as GuildMember).roles.cache.has(role.roleId))
+          }));
+      const row = new ActionRowBuilder()
+          .addComponents(menuSelector);
+      await interaction.followUp({ embeds: [embed], content: " ", components: [row as unknown as APIActionRowComponent<APIMessageActionRowComponent>], ephemeral: true});
+      return;
 }

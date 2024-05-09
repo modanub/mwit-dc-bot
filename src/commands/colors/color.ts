@@ -1,5 +1,5 @@
-import { AutocompleteInteraction, CommandInteraction, CommandInteractionOptionResolver, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import { createColorRole, deleteColorRole, getColorRoles } from "../funcs/colorRole";
+import { APIActionRowComponent, APIMessageActionRowComponent, ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, CommandInteraction, CommandInteractionOptionResolver, EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder, TextChannel } from "discord.js";
+import { createColorRole, deleteColorRole, getColorRoles } from "../../funcs/colorRole";
 
 export const data = new SlashCommandBuilder()
     .setName("color")
@@ -31,6 +31,17 @@ export const data = new SlashCommandBuilder()
                 .setDescription("🧾 ชื่อของยศสีที่ต้องการลบ")
                 .setRequired(true)
                 .setAutocomplete(true)
+            )
+        )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName("sendembed")
+            .setDescription("📤 ส่ง embed + ปุ่มในห้องที่ต้องการเพื่อเลือกยศสี")
+            .addChannelOption(option =>
+                option
+                .setName("channel")
+                .setDescription("📡 ห้องที่ต้องการส่ง embed และปุ่ม")
+                .setRequired(true)
             )
         )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
@@ -78,6 +89,20 @@ export async function execute(interaction: CommandInteraction) {
                 return interaction.reply("⚠️ เกิดข้อผิดพลาดขณะลบยศสี.");
             }
             return interaction.reply({ content: `🎉 ลบยศสี${name}เสร็จสิ้น`, ephemeral: true });
+        }
+        case "sendembed": {
+            const channel = (interaction.options as CommandInteractionOptionResolver).getChannel("channel");
+            if (!channel) { return interaction.reply("❌ คำสั่งไม่ถูกต้อง"); }
+            if (!interaction.guild) { return interaction.reply("❌ คำสั่งนี้ต้องใช้ในเซิร์ฟเวอร์เท่านั้น"); }
+            const msg = "กดปุ่มด้านล่างเพื่อแสดงสีชื่อและเมนูเลือกสีชื่อ";
+            const btn = new ButtonBuilder()
+                .setCustomId("show_color_role_selector")
+                .setLabel("🎨 แสดงเมนูเลือกสี")
+                .setStyle(ButtonStyle.Primary);
+            const row = new ActionRowBuilder()
+                .addComponents(btn);
+            await (channel as TextChannel).send({ content: msg, components: [row as unknown as APIActionRowComponent<APIMessageActionRowComponent>] });
+            return interaction.reply("🎉 ส่ง embed และปุ่มสำหรับเลือกสีเสร็จสิ้น");
         }
         default:
             return interaction.reply("❌ คำสั่งไม่ถูกต้อง");

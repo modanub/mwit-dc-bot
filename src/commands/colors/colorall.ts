@@ -1,5 +1,5 @@
 import { AutocompleteInteraction, CommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import { getColorRoles } from "../funcs/colorRole";
+import { getColorRoles } from "../../funcs/colorRole";
 
 export const data = new SlashCommandBuilder()
     .setName("colorall")
